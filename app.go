@@ -73,10 +73,7 @@ func formatValue(key string, meta string, value string) string {
     if (meta != "") {
         result += "{" + meta + "}";
     }
-    result += " "
-    result += filterNumber(value)
-    result += "\n"
-    return result
+    return " " + value +"\n"
 }
 
 func filterNumber(value string) string {
