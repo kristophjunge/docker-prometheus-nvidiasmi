@@ -96,7 +96,7 @@ func metrics(w http.ResponseWriter, r *http.Request) {
         }
         cmd = exec.Command("/bin/cat", dir + "/test.xml")
     } else {
-        cmd = exec.Command("/usr/bin/nvidia-smi", "-q", "-x")
+        cmd = exec.Command("/usr/local/nvidia/bin/nvidia-smi", "-q", "-x")
     }
 
     stdout, err := cmd.Output()

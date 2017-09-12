@@ -1,11 +1,10 @@
-FROM golang:alpine
+FROM nvidia/cuda
 
 MAINTAINER Kritoph Junge <kristoph.junge@gmail.com>
 
-LABEL com.nvidia.volumes.needed="nvidia_driver"
-
-ENV PATH /usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}
-ENV LD_LIBRARY_PATH /usr/local/nvidia/lib:/usr/local/nvidia/lib64
+RUN apt-get update && \
+    apt-get -y install golang --no-install-recommends && \
+    rm -r /var/lib/apt/lists/*
 
 WORKDIR /go/src/app
 
