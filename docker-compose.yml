@@ -4,6 +4,7 @@ services:
   prometheus_nvidiasmi_exporter:
     container_name: prometheus_nvidiasmi_exporter
     build: .
-    tty: true
+    environment:
+      TEST_MODE: 1
     ports:
-      - "8000:8000"
+      - "9500:9500"

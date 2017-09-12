@@ -25,7 +25,6 @@ var indexHtml = string(`
 </html>
 `)
 
-
 type NvidiaSmiLog struct {
     DriverVersion string `xml:"driver_version"`
     AttachedGPUs string `xml:"attached_gpus"`
@@ -69,20 +68,37 @@ type NvidiaSmiLog struct {
     } `xml:"gpu"`
 }
 
-func metrics(w http.ResponseWriter, r *http.Request) {
+func formatValue(key string, meta string, value string) string {
+    result := key;
+    if (meta != "") {
+        result += "{" + meta + "}";
+    }
+    result += " "
+    result += filterNumber(value)
+    result += "\n"
+    return result
+}
 
+func filterNumber(value string) string {
+    r := regexp.MustCompile("[^0-9.]")
+    return r.ReplaceAllString(value, "")
+}
+
+func metrics(w http.ResponseWriter, r *http.Request) {
     log.Print("Serving /metrics")
 
-    // Get current dir
-    dir, err := os.Getwd()
-    if err != nil {
-        log.Fatal(err)
+    var cmd *exec.Cmd
+    if (os.Getenv("TEST_MODE") == "1") {
+        log.Print("Test mode enabled")
+        dir, err := os.Getwd()
+        if err != nil {
+            log.Fatal(err)
+        }
+        cmd = exec.Command("/bin/cat", dir + "/test.xml")
+    } else {
+        cmd = exec.Command("/usr/bin/nvidia-smi", "-q", "-x")
     }
 
-    // Call system command
-    app := "/bin/cat"
-    arg0 := dir + "/test.xml";
-    cmd := exec.Command(app, arg0)
     stdout, err := cmd.Output()
     if err != nil {
         println(err.Error())
@@ -95,28 +111,28 @@ func metrics(w http.ResponseWriter, r *http.Request) {
     fmt.Println(xmlData)
 
     // Output
-    io.WriteString(w, "nvidiasmi_driver_version" + " " + xmlData.DriverVersion + "\n")
-    io.WriteString(w, "nvidiasmi_attached_gpus" + " " + filterNumber(xmlData.AttachedGPUs) + "\n")
+    io.WriteString(w, formatValue("nvidiasmi_driver_version", "",xmlData.DriverVersion))
+    io.WriteString(w, formatValue("nvidiasmi_attached_gpus", "", filterNumber(xmlData.AttachedGPUs)))
     for _, GPU := range xmlData.GPUs {
-        io.WriteString(w, "nvidiasmi_fan_speed{gpu=\"" + GPU.PCI.PCIBus + "\"}" + " " + filterNumber(GPU.FanSpeed) + "\n")
-        io.WriteString(w, "nvidiasmi_memory_usage_total{gpu=\"" + GPU.PCI.PCIBus + "\"}" + " " + filterNumber(GPU.FbMemoryUsage.Total) + "\n")
-        io.WriteString(w, "nvidiasmi_memory_usage_used{gpu=\"" + GPU.PCI.PCIBus + "\"}" + " " + filterNumber(GPU.FbMemoryUsage.Used) + "\n")
-        io.WriteString(w, "nvidiasmi_memory_usage_free{gpu=\"" + GPU.PCI.PCIBus + "\"}" + " " + filterNumber(GPU.FbMemoryUsage.Free) + "\n")
-        io.WriteString(w, "nvidiasmi_utilization_gpu{gpu=\"" + GPU.PCI.PCIBus + "\"}" + " " + filterNumber(GPU.Utilization.GPUUtil) + "\n")
-        io.WriteString(w, "nvidiasmi_utilization_memory{gpu=\"" + GPU.PCI.PCIBus + "\"}" + " " + filterNumber(GPU.Utilization.MemoryUtil) + "\n")
-        io.WriteString(w, "nvidiasmi_temp_gpu{gpu=\"" + GPU.PCI.PCIBus + "\"}" + " " + filterNumber(GPU.Temperature.GPUTemp) + "\n")
-        io.WriteString(w, "nvidiasmi_temp_gpu_max{gpu=\"" + GPU.PCI.PCIBus + "\"}" + " " + filterNumber(GPU.Temperature.GPUTempMaxThreshold) + "\n")
-        io.WriteString(w, "nvidiasmi_temp_gpu_slow{gpu=\"" + GPU.PCI.PCIBus + "\"}" + " " + filterNumber(GPU.Temperature.GPUTempSlowThreshold) + "\n")
-        io.WriteString(w, "nvidiasmi_power_draw{gpu=\"" + GPU.PCI.PCIBus + "\"}" + " " + filterNumber(GPU.PowerReadings.PowerDraw) + "\n")
-        io.WriteString(w, "nvidiasmi_power_limit{gpu=\"" + GPU.PCI.PCIBus + "\"}" + " " + filterNumber(GPU.PowerReadings.PowerLimit) + "\n")
-        io.WriteString(w, "nvidiasmi_clock_graphics{gpu=\"" + GPU.PCI.PCIBus + "\"}" + " " + filterNumber(GPU.Clocks.GraphicsClock) + "\n")
-        io.WriteString(w, "nvidiasmi_clock_graphics_max{gpu=\"" + GPU.PCI.PCIBus + "\"}" + " " + filterNumber(GPU.MaxClocks.GraphicsClock) + "\n")
-        io.WriteString(w, "nvidiasmi_clock_sm{gpu=\"" + GPU.PCI.PCIBus + "\"}" + " " + filterNumber(GPU.Clocks.SmClock) + "\n")
-        io.WriteString(w, "nvidiasmi_clock_sm_max{gpu=\"" + GPU.PCI.PCIBus + "\"}" + " " + filterNumber(GPU.MaxClocks.SmClock) + "\n")
-        io.WriteString(w, "nvidiasmi_clock_mem{gpu=\"" + GPU.PCI.PCIBus + "\"}" + " " + filterNumber(GPU.Clocks.MemClock) + "\n")
-        io.WriteString(w, "nvidiasmi_clock_mem_max{gpu=\"" + GPU.PCI.PCIBus + "\"}" + " " + filterNumber(GPU.MaxClocks.MemClock) + "\n")
-        io.WriteString(w, "nvidiasmi_clock_video{gpu=\"" + GPU.PCI.PCIBus + "\"}" + " " + filterNumber(GPU.Clocks.VideoClock) + "\n")
-        io.WriteString(w, "nvidiasmi_clock_video_max{gpu=\"" + GPU.PCI.PCIBus + "\"}" + " " + filterNumber(GPU.MaxClocks.VideoClock) + "\n")
+        io.WriteString(w, formatValue("nvidiasmi_fan_speed", "gpu=\"" + GPU.PCI.PCIBus + "\"", filterNumber(GPU.FanSpeed)))
+        io.WriteString(w, formatValue("nvidiasmi_memory_usage_total", "gpu=\"" + GPU.PCI.PCIBus + "\"", filterNumber(GPU.FbMemoryUsage.Total)))
+        io.WriteString(w, formatValue("nvidiasmi_memory_usage_used", "gpu=\"" + GPU.PCI.PCIBus + "\"", filterNumber(GPU.FbMemoryUsage.Used)))
+        io.WriteString(w, formatValue("nvidiasmi_memory_usage_free", "gpu=\"" + GPU.PCI.PCIBus + "\"", filterNumber(GPU.FbMemoryUsage.Free)))
+        io.WriteString(w, formatValue("nvidiasmi_utilization_gpu", "gpu=\"" + GPU.PCI.PCIBus + "\"", filterNumber(GPU.Utilization.GPUUtil)))
+        io.WriteString(w, formatValue("nvidiasmi_utilization_memory", "gpu=\"" + GPU.PCI.PCIBus + "\"", filterNumber(GPU.Utilization.MemoryUtil)))
+        io.WriteString(w, formatValue("nvidiasmi_temp_gpu", "gpu=\"" + GPU.PCI.PCIBus + "\"", filterNumber(GPU.Temperature.GPUTemp)))
+        io.WriteString(w, formatValue("nvidiasmi_temp_gpu_max", "gpu=\"" + GPU.PCI.PCIBus + "\"", filterNumber(GPU.Temperature.GPUTempMaxThreshold)))
+        io.WriteString(w, formatValue("nvidiasmi_temp_gpu_slow", "gpu=\"" + GPU.PCI.PCIBus + "\"", filterNumber(GPU.Temperature.GPUTempSlowThreshold)))
+        io.WriteString(w, formatValue("nvidiasmi_power_draw", "gpu=\"" + GPU.PCI.PCIBus + "\"", filterNumber(GPU.PowerReadings.PowerDraw)))
+        io.WriteString(w, formatValue("nvidiasmi_power_limit", "gpu=\"" + GPU.PCI.PCIBus + "\"", filterNumber(GPU.PowerReadings.PowerLimit)))
+        io.WriteString(w, formatValue("nvidiasmi_clock_graphics", "gpu=\"" + GPU.PCI.PCIBus + "\"", filterNumber(GPU.Clocks.GraphicsClock)))
+        io.WriteString(w, formatValue("nvidiasmi_clock_graphics_max", "gpu=\"" + GPU.PCI.PCIBus + "\"", filterNumber(GPU.MaxClocks.GraphicsClock)))
+        io.WriteString(w, formatValue("nvidiasmi_clock_sm", "gpu=\"" + GPU.PCI.PCIBus + "\"", filterNumber(GPU.Clocks.SmClock)))
+        io.WriteString(w, formatValue("nvidiasmi_clock_sm_max", "gpu=\"" + GPU.PCI.PCIBus + "\"", filterNumber(GPU.MaxClocks.SmClock)))
+        io.WriteString(w, formatValue("nvidiasmi_clock_mem", "gpu=\"" + GPU.PCI.PCIBus + "\"", filterNumber(GPU.Clocks.MemClock)))
+        io.WriteString(w, formatValue("nvidiasmi_clock_mem_max", "gpu=\"" + GPU.PCI.PCIBus + "\"", filterNumber(GPU.MaxClocks.MemClock)))
+        io.WriteString(w, formatValue("nvidiasmi_clock_video", "gpu=\"" + GPU.PCI.PCIBus + "\"", filterNumber(GPU.Clocks.VideoClock)))
+        io.WriteString(w, formatValue("nvidiasmi_clock_video_max", "gpu=\"" + GPU.PCI.PCIBus + "\"", filterNumber(GPU.MaxClocks.VideoClock)))
     }
 }
 
@@ -126,13 +142,8 @@ func index(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-    log.Print("Prometheus Nvidia SMI Exporter running!")
+    log.Print("Prometheus Nvidia SMI Exporter running")
     http.HandleFunc("/", index)
     http.HandleFunc("/metrics", metrics)
-    http.ListenAndServe(":8000", nil)
-}
-
-func filterNumber(value string) string {
-    r := regexp.MustCompile("[^0-9.]")
-    return r.ReplaceAllString(value, "")
+    http.ListenAndServe(":9500", nil)
 }
