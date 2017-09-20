@@ -139,7 +139,7 @@ func index(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-    log.Print("Prometheus Nvidia SMI Exporter running")
+    log.Print("Prometheus Nvidia SMI exporter running")
     http.HandleFunc("/", index)
     http.HandleFunc("/metrics", metrics)
     http.ListenAndServe(":9500", nil)

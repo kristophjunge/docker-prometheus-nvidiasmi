@@ -1,5 +1,5 @@
 # Docker Prometheus Nvidia SMI Exporter
 
-Nvidia SMI query exporter for Prometheus for GPU monitoring.
+Dockerized Prometheus exporter for monitoring of Nvidia GPUs using nvidia-smi written in Go.
 
 Supports multiple GPUs.
