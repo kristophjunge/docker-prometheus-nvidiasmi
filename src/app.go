@@ -10,19 +10,7 @@ import (
     "regexp"
 )
 
-var indexHtml = string(`
-<!doctype html>
-<html>
-    <head>
-        <meta charset="utf-8">
-        <title>Nvidia SMI Exporter</title>
-    </head>
-    <body>
-        <h1>Prometheus Nvidia SMI Exporter</h1>
-        <p><a href="/metrics">Metrics</a></p>
-    </body>
-</html>
-`)
+var testMode string;
 
 type NvidiaSmiLog struct {
     DriverVersion string `xml:"driver_version"`
@@ -85,8 +73,7 @@ func metrics(w http.ResponseWriter, r *http.Request) {
     log.Print("Serving /metrics")
 
     var cmd *exec.Cmd
-    if (os.Getenv("TEST_MODE") == "1") {
-        log.Print("Test mode enabled")
+    if (testMode == "1") {
         dir, err := os.Getwd()
         if err != nil {
             log.Fatal(err)
@@ -108,7 +95,7 @@ func metrics(w http.ResponseWriter, r *http.Request) {
     xml.Unmarshal(stdout, &xmlData)
 
     // Output
-    io.WriteString(w, formatValue("nvidiasmi_driver_version", "",xmlData.DriverVersion))
+    io.WriteString(w, formatValue("nvidiasmi_driver_version", "","\"" + xmlData.DriverVersion + "\""))
     io.WriteString(w, formatValue("nvidiasmi_attached_gpus", "", filterNumber(xmlData.AttachedGPUs)))
     for _, GPU := range xmlData.GPUs {
         io.WriteString(w, formatValue("nvidiasmi_fan_speed", "uuid=\"" + GPU.UUID + "\"", filterNumber(GPU.FanSpeed)))
@@ -135,12 +122,30 @@ func metrics(w http.ResponseWriter, r *http.Request) {
 
 func index(w http.ResponseWriter, r *http.Request) {
     log.Print("Serving /index")
-    io.WriteString(w, indexHtml)
+
+    html := `<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Nvidia SMI Exporter</title>
+    </head>
+    <body>
+        <h1>Nvidia SMI Exporter</h1>
+        <p><a href="/metrics">Metrics</a></p>
+    </body>
+</html>`
+
+    io.WriteString(w, html)
 }
 
 func main() {
+    testMode = os.Getenv("TEST_MODE")
+    if (testMode == "1") {
+        log.Print("Test mode is enabled")
+    }
+
     log.Print("Prometheus Nvidia SMI exporter running")
     http.HandleFunc("/", index)
     http.HandleFunc("/metrics", metrics)
-    http.ListenAndServe(":9500", nil)
+    http.ListenAndServe(":9202", nil)
 }

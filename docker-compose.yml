@@ -1,10 +1,10 @@
 version: '2'
 
 services:
-  prometheus_nvidiasmi_exporter:
-    container_name: prometheus_nvidiasmi_exporter
+  prometheus_nvidiasmi:
+    container_name: prometheus_nvidiasmi
     build: .
     environment:
       TEST_MODE: 1
     ports:
-      - "9500:9500"
+      - "9202:9202"
