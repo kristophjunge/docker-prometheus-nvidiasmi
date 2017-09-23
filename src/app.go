@@ -98,7 +98,7 @@ func metrics(w http.ResponseWriter, r *http.Request) {
     xml.Unmarshal(stdout, &xmlData)
 
     // Output
-    io.WriteString(w, formatValue("nvidiasmi_driver_version", "","\"" + xmlData.DriverVersion + "\""))
+    io.WriteString(w, formatValue("nvidiasmi_driver_version", "", xmlData.DriverVersion))
     io.WriteString(w, formatValue("nvidiasmi_attached_gpus", "", filterNumber(xmlData.AttachedGPUs)))
     for _, GPU := range xmlData.GPUs {
         io.WriteString(w, formatValue("nvidiasmi_fan_speed", "uuid=\"" + GPU.UUID + "\"", filterNumber(GPU.FanSpeed)))
