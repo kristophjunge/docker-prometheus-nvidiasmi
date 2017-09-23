@@ -10,6 +10,8 @@ import (
     "regexp"
 )
 
+const NVIDIA_SMI_PATH = "/usr/local/nvidia/bin/nvidia-smi"
+
 var testMode string;
 
 type NvidiaSmiLog struct {
@@ -80,7 +82,7 @@ func metrics(w http.ResponseWriter, r *http.Request) {
         }
         cmd = exec.Command("/bin/cat", dir + "/test.xml")
     } else {
-        cmd = exec.Command("/usr/local/nvidia/bin/nvidia-smi", "-q", "-x")
+        cmd = exec.Command(NVIDIA_SMI_PATH, "-q", "-x")
     }
 
     // Execute system command
