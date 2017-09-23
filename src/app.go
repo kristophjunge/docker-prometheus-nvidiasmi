@@ -10,6 +10,7 @@ import (
     "regexp"
 )
 
+const LISTEN_ADDRESS = ":9202"
 const NVIDIA_SMI_PATH = "/usr/local/nvidia/bin/nvidia-smi"
 
 var testMode string;
@@ -144,8 +145,8 @@ func main() {
         log.Print("Test mode is enabled")
     }
 
-    log.Print("Nvidia SMI exporter running")
+    log.Print("Nvidia SMI exporter listening on " + LISTEN_ADDRESS)
     http.HandleFunc("/", index)
     http.HandleFunc("/metrics", metrics)
-    http.ListenAndServe(":9202", nil)
+    http.ListenAndServe(LISTEN_ADDRESS, nil)
 }
