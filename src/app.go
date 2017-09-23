@@ -122,7 +122,6 @@ func metrics(w http.ResponseWriter, r *http.Request) {
 
 func index(w http.ResponseWriter, r *http.Request) {
     log.Print("Serving /index")
-
     html := `<!doctype html>
 <html>
     <head>
@@ -134,7 +133,6 @@ func index(w http.ResponseWriter, r *http.Request) {
         <p><a href="/metrics">Metrics</a></p>
     </body>
 </html>`
-
     io.WriteString(w, html)
 }
 
@@ -144,7 +142,7 @@ func main() {
         log.Print("Test mode is enabled")
     }
 
-    log.Print("Prometheus Nvidia SMI exporter running")
+    log.Print("Nvidia SMI exporter running")
     http.HandleFunc("/", index)
     http.HandleFunc("/metrics", metrics)
     http.ListenAndServe(":9202", nil)
