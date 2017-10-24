@@ -1,4 +1,4 @@
-FROM nvidia/cuda
+FROM nvidia/cuda:8.0-runtime-ubuntu16.04
 
 MAINTAINER Kristoph Junge <kristoph.junge@gmail.com>
 
