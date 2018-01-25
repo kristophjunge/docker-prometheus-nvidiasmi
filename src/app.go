@@ -11,7 +11,7 @@ import (
 )
 
 const LISTEN_ADDRESS = ":9202"
-const NVIDIA_SMI_PATH = "/usr/local/nvidia/bin/nvidia-smi"
+const NVIDIA_SMI_PATH = "/usr/bin/nvidia-smi"
 
 var testMode string;
 
@@ -22,6 +22,7 @@ type NvidiaSmiLog struct {
         ProductName string `xml:"product_name"`
         ProductBrand string `xml:"product_brand"`
         UUID string `xml:"uuid"`
+        MinorNumber string `xml:"minor_number"`
         FanSpeed string `xml:"fan_speed"`
         PCI struct {
             PCIBus string `xml:"pci_bus"`
@@ -101,25 +102,27 @@ func metrics(w http.ResponseWriter, r *http.Request) {
     io.WriteString(w, formatValue("nvidiasmi_driver_version", "", xmlData.DriverVersion))
     io.WriteString(w, formatValue("nvidiasmi_attached_gpus", "", filterNumber(xmlData.AttachedGPUs)))
     for _, GPU := range xmlData.GPUs {
-        io.WriteString(w, formatValue("nvidiasmi_fan_speed", "uuid=\"" + GPU.UUID + "\"", filterNumber(GPU.FanSpeed)))
-        io.WriteString(w, formatValue("nvidiasmi_memory_usage_total", "uuid=\"" + GPU.UUID + "\"", filterNumber(GPU.FbMemoryUsage.Total)))
-        io.WriteString(w, formatValue("nvidiasmi_memory_usage_used", "uuid=\"" + GPU.UUID + "\"", filterNumber(GPU.FbMemoryUsage.Used)))
-        io.WriteString(w, formatValue("nvidiasmi_memory_usage_free", "uuid=\"" + GPU.UUID + "\"", filterNumber(GPU.FbMemoryUsage.Free)))
-        io.WriteString(w, formatValue("nvidiasmi_utilization_gpu", "uuid=\"" + GPU.UUID + "\"", filterNumber(GPU.Utilization.GPUUtil)))
-        io.WriteString(w, formatValue("nvidiasmi_utilization_memory", "uuid=\"" + GPU.UUID + "\"", filterNumber(GPU.Utilization.MemoryUtil)))
-        io.WriteString(w, formatValue("nvidiasmi_temp_gpu", "uuid=\"" + GPU.UUID + "\"", filterNumber(GPU.Temperature.GPUTemp)))
-        io.WriteString(w, formatValue("nvidiasmi_temp_gpu_max", "uuid=\"" + GPU.UUID + "\"", filterNumber(GPU.Temperature.GPUTempMaxThreshold)))
-        io.WriteString(w, formatValue("nvidiasmi_temp_gpu_slow", "uuid=\"" + GPU.UUID + "\"", filterNumber(GPU.Temperature.GPUTempSlowThreshold)))
-        io.WriteString(w, formatValue("nvidiasmi_power_draw", "uuid=\"" + GPU.UUID + "\"", filterNumber(GPU.PowerReadings.PowerDraw)))
-        io.WriteString(w, formatValue("nvidiasmi_power_limit", "uuid=\"" + GPU.UUID + "\"", filterNumber(GPU.PowerReadings.PowerLimit)))
-        io.WriteString(w, formatValue("nvidiasmi_clock_graphics", "uuid=\"" + GPU.UUID + "\"", filterNumber(GPU.Clocks.GraphicsClock)))
-        io.WriteString(w, formatValue("nvidiasmi_clock_graphics_max", "uuid=\"" + GPU.UUID + "\"", filterNumber(GPU.MaxClocks.GraphicsClock)))
-        io.WriteString(w, formatValue("nvidiasmi_clock_sm", "uuid=\"" + GPU.UUID + "\"", filterNumber(GPU.Clocks.SmClock)))
-        io.WriteString(w, formatValue("nvidiasmi_clock_sm_max", "uuid=\"" + GPU.UUID + "\"", filterNumber(GPU.MaxClocks.SmClock)))
-        io.WriteString(w, formatValue("nvidiasmi_clock_mem", "uuid=\"" + GPU.UUID + "\"", filterNumber(GPU.Clocks.MemClock)))
-        io.WriteString(w, formatValue("nvidiasmi_clock_mem_max", "uuid=\"" + GPU.UUID + "\"", filterNumber(GPU.MaxClocks.MemClock)))
-        io.WriteString(w, formatValue("nvidiasmi_clock_video", "uuid=\"" + GPU.UUID + "\"", filterNumber(GPU.Clocks.VideoClock)))
-        io.WriteString(w, formatValue("nvidiasmi_clock_video_max", "uuid=\"" + GPU.UUID + "\"", filterNumber(GPU.MaxClocks.VideoClock)))
+        meta := "name=\"" + GPU.ProductName + " [" + GPU.MinorNumber + "]\"" + ", " + "uuid=\"" + GPU.UUID + "\""
+
+        io.WriteString(w, formatValue("nvidiasmi_fan_speed", meta, filterNumber(GPU.FanSpeed)))
+        io.WriteString(w, formatValue("nvidiasmi_memory_usage_total", meta, filterNumber(GPU.FbMemoryUsage.Total)))
+        io.WriteString(w, formatValue("nvidiasmi_memory_usage_used", meta, filterNumber(GPU.FbMemoryUsage.Used)))
+        io.WriteString(w, formatValue("nvidiasmi_memory_usage_free", meta, filterNumber(GPU.FbMemoryUsage.Free)))
+        io.WriteString(w, formatValue("nvidiasmi_utilization_gpu", meta, filterNumber(GPU.Utilization.GPUUtil)))
+        io.WriteString(w, formatValue("nvidiasmi_utilization_memory", meta, filterNumber(GPU.Utilization.MemoryUtil)))
+        io.WriteString(w, formatValue("nvidiasmi_temp_gpu", meta, filterNumber(GPU.Temperature.GPUTemp)))
+        io.WriteString(w, formatValue("nvidiasmi_temp_gpu_max", meta, filterNumber(GPU.Temperature.GPUTempMaxThreshold)))
+        io.WriteString(w, formatValue("nvidiasmi_temp_gpu_slow", meta, filterNumber(GPU.Temperature.GPUTempSlowThreshold)))
+        io.WriteString(w, formatValue("nvidiasmi_power_draw", meta, filterNumber(GPU.PowerReadings.PowerDraw)))
+        io.WriteString(w, formatValue("nvidiasmi_power_limit", meta, filterNumber(GPU.PowerReadings.PowerLimit)))
+        io.WriteString(w, formatValue("nvidiasmi_clock_graphics", meta, filterNumber(GPU.Clocks.GraphicsClock)))
+        io.WriteString(w, formatValue("nvidiasmi_clock_graphics_max", meta, filterNumber(GPU.MaxClocks.GraphicsClock)))
+        io.WriteString(w, formatValue("nvidiasmi_clock_sm", meta, filterNumber(GPU.Clocks.SmClock)))
+        io.WriteString(w, formatValue("nvidiasmi_clock_sm_max", meta, filterNumber(GPU.MaxClocks.SmClock)))
+        io.WriteString(w, formatValue("nvidiasmi_clock_mem", meta, filterNumber(GPU.Clocks.MemClock)))
+        io.WriteString(w, formatValue("nvidiasmi_clock_mem_max", meta, filterNumber(GPU.MaxClocks.MemClock)))
+        io.WriteString(w, formatValue("nvidiasmi_clock_video", meta, filterNumber(GPU.Clocks.VideoClock)))
+        io.WriteString(w, formatValue("nvidiasmi_clock_video_max", meta, filterNumber(GPU.MaxClocks.VideoClock)))
     }
 }
 
