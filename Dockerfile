@@ -1,4 +1,4 @@
-FROM nvidia/cuda
+FROM nvidia/cuda:8.0-devel-ubuntu14.04
 
 MAINTAINER Kristoph Junge <kristoph.junge@gmail.com>
 
